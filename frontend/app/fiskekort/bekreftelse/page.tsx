@@ -1,144 +1,107 @@
+/**
+ * app/fiskekort/bekreftelse/page.tsx
+ *
+ * @route /fiskekort/bekreftelse?betaling_id={UUID}
+ * @beskrivelse Viser fiskekort med QR-kode etter bekreftet betaling.
+ * @auth ingen
+ * @apiKall GET /api/betaling/{betaling_id}  (via useBekreftelse.ts)
+ *
+ * Denne filen håndterer kun URL-params og Suspense-innpakking.
+ * Polling-logikk: useBekreftelse.ts  |  Kortvisning: components/FiskekortKort.tsx
+ */
+
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import QRCode from "react-qr-code";
-import { getToken } from "@/lib/auth";
-import { getBetalingStatus, BetalingStatus } from "@/lib/api";
+import FiskekortKort from "@/components/FiskekortKort";
+import { useBekreftelse } from "./useBekreftelse";
 
 function BekreftelseInnhold() {
-  const searchParams = useSearchParams();
-  const betalingId = searchParams.get("betaling_id");
+  const betalingId = useSearchParams().get("betaling_id");
+  const { tilstand, prøvIgjen } = useBekreftelse(betalingId);
 
-  const [betaling, setBetaling] = useState<BetalingStatus | null>(null);
-  const [feil, setFeil] = useState("");
-  const [laster, setLaster] = useState(true);
+  if (tilstand.fase === "laster") {
+    return <StatusMelding tekst="Henter betalingsstatus…" />;
+  }
 
-  const hentStatus = useCallback(async () => {
-    if (!betalingId) return;
-    const token = getToken();
-    if (!token) {
-      setFeil("Du er ikke innlogget.");
-      setLaster(false);
-      return;
-    }
-    try {
-      const data = await getBetalingStatus(betalingId, token);
-      setBetaling(data);
-    } catch {
-      setFeil("Kunne ikke hente betalingsstatus.");
-    } finally {
-      setLaster(false);
-    }
-  }, [betalingId]);
-
-  useEffect(() => {
-    hentStatus();
-  }, [hentStatus]);
-
-  if (!betalingId) {
+  if (tilstand.fase === "venter") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <p className="text-red-600">Ingen betaling-ID funnet i URL.</p>
+      <div className="text-center">
+        <div className="text-4xl mb-3">⏳</div>
+        <h1 className="text-2xl font-bold text-blue-900 mb-2">
+          Venter på bekreftelse…
+        </h1>
+        <p className="text-gray-500 mb-4">
+          Forsøk {tilstand.forsok} av 20 – dette tar vanligvis noen sekunder.
+        </p>
       </div>
     );
   }
 
-  if (laster) {
+  if (tilstand.fase === "feil") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <p className="text-blue-700 text-lg">Henter betalingsstatus…</p>
+      <div className="text-center">
+        <div className="text-4xl mb-3">⚠️</div>
+        <p className="text-red-600 mb-4">{tilstand.melding}</p>
+        <button
+          onClick={prøvIgjen}
+          className="rounded-xl bg-blue-700 px-6 py-2 text-white font-semibold hover:bg-blue-800"
+        >
+          Prøv igjen
+        </button>
       </div>
     );
   }
 
-  if (feil) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-blue-50">
-        <p className="text-red-600">{feil}</p>
-      </div>
-    );
-  }
-
-  if (!betaling) return null;
-
-  const erFullfort = betaling.betaling_status === "fullført";
-
+  // fase === "ferdig"
+  const { betaling } = tilstand;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-blue-50 p-6">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md text-center">
-        {erFullfort ? (
-          <>
-            <div className="mb-4 text-4xl">✅</div>
-            <h1 className="mb-2 text-2xl font-bold text-blue-900">
-              Betaling mottatt!
-            </h1>
-            <p className="mb-6 text-gray-500">
-              Vis QR-koden til oppsynsmann for kontroll.
-            </p>
-
-            <div className="mb-6 flex justify-center rounded-xl bg-white p-4 shadow-inner">
-              <QRCode value={betaling.qr_kode} size={200} />
-            </div>
-
-            <div className="mb-6 rounded-xl bg-blue-50 p-4 text-left text-sm text-gray-700 space-y-1">
-              <div>
-                <span className="font-medium">Korttype:</span>{" "}
-                {betaling.type.charAt(0).toUpperCase() + betaling.type.slice(1)}
-              </div>
-              <div>
-                <span className="font-medium">Redskap:</span>{" "}
-                {betaling.redskap.charAt(0).toUpperCase() + betaling.redskap.slice(1)}
-              </div>
-              <div>
-                <span className="font-medium">Gyldig:</span>{" "}
-                {betaling.gyldig_fra} – {betaling.gyldig_til}
-              </div>
-              <div>
-                <span className="font-medium">Status:</span>{" "}
-                <span className="text-green-600 font-semibold">Aktiv</span>
-              </div>
-            </div>
-
-            <a
-              href="/mine-kort"
-              className="block rounded-xl bg-blue-700 py-2 text-white font-semibold hover:bg-blue-800 transition-colors"
-            >
-              Se alle mine kort
-            </a>
-          </>
-        ) : (
-          <>
-            <div className="mb-4 text-4xl">⏳</div>
-            <h1 className="mb-2 text-2xl font-bold text-blue-900">
-              Venter på betaling…
-            </h1>
-            <p className="mb-6 text-gray-500">
-              Betalingen er ikke bekreftet ennå. Prøv igjen om et øyeblikk.
-            </p>
-            <button
-              onClick={() => { setLaster(true); hentStatus(); }}
-              className="rounded-xl bg-blue-700 px-6 py-2 text-white font-semibold hover:bg-blue-800 transition-colors"
-            >
-              Oppdater status
-            </button>
-          </>
-        )}
+    <>
+      <div className="text-center mb-6">
+        <div className="text-4xl mb-2">✅</div>
+        <h1 className="text-2xl font-bold text-blue-900">Betaling mottatt!</h1>
+        <p className="text-gray-500 mt-1">
+          Vis QR-koden til oppsyn, eller last ned kortet som PDF.
+        </p>
       </div>
-    </div>
+
+      <FiskekortKort betaling={betaling} />
+
+      <div className="flex gap-3 mt-6 print:hidden">
+        <button
+          onClick={() => window.print()}
+          className="rounded-xl bg-blue-700 px-6 py-3 text-white font-semibold hover:bg-blue-800 shadow"
+        >
+          Last ned PDF
+        </button>
+        <a
+          href="/fiskekort/kjop"
+          className="rounded-xl border-2 border-blue-700 px-6 py-3 text-blue-700 font-semibold hover:bg-blue-100"
+        >
+          Kjøp nytt kort
+        </a>
+      </div>
+
+      <p className="mt-4 text-xs text-gray-400 print:hidden">
+        Sendes også til {betaling.epost}
+      </p>
+    </>
+  );
+}
+
+function StatusMelding({ tekst }: { tekst: string }) {
+  return (
+    <p className="text-blue-700 text-lg">{tekst}</p>
   );
 }
 
 export default function BekreftelsePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-blue-50">
-          <p className="text-blue-700 text-lg">Laster…</p>
-        </div>
-      }
-    >
-      <BekreftelseInnhold />
-    </Suspense>
+    <main className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-6">
+      <Suspense fallback={<StatusMelding tekst="Laster…" />}>
+        <BekreftelseInnhold />
+      </Suspense>
+    </main>
   );
 }

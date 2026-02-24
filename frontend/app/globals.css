@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Gjenbrukbar input-stil – brukes i alle skjemaer */
+  .input {
+    @apply w-full rounded-lg border border-gray-300 px-4 py-2
+           focus:outline-none focus:ring-2 focus:ring-blue-400;
+  }
+}
+
+/* Skriv ut kun #fiskekort-print – brukes av "Last ned PDF"-knappen */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #fiskekort-print,
+  #fiskekort-print * {
+    visibility: visible !important;
+  }
+  #fiskekort-print {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    width: 340px !important;
+  }
+}

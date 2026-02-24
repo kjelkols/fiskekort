@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: Fiskekort-API
+  version: 1.0.0
+  description: API for administrasjon og kjøp av fiskekort
+servers:
+  - url: /api
+paths:
+  /fiskekort:
+    get:
+      summary: List alle fiskekort for innlogget bruker
+      description: Returnerer alle fiskekort (aktive, fremtidige og utgåtte) for innlogget bruker
+      responses:
+        '200':
+          description: Liste over fiskekort
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fiskekort'
+    post:
+      summary: Kjøp eller opprett nytt fiskekort
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiskekortRequest'
+      responses:
+        '201':
+          description: Fiskekort opprettet
+  /fiskekort/{id}:
+    get:
+      summary: Hent detaljer om et fiskekort
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fiskekort-detaljer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fiskekort'
+  /kontroll/qr/{kode}:
+    get:
+      summary: Sjekk gyldighet for fiskekort via QR-kode
+      parameters:
+        - in: path
+          name: kode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Gyldighetsstatus
+  /backup:
+    get:
+      summary: Last ned backup av aktive og fremtidige fiskekort
+      responses:
+        '200':
+          description: Backup-data
+  /backup/restore:
+    post:
+      summary: Gjenopprett backup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Backup gjenopprettet
+  /betaling/vipps:
+    post:
+      summary: Initier Vipps-betaling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Vipps-betaling initiert
+  /betaling/stripe:
+    post:
+      summary: Initier Stripe-betaling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Stripe-betaling initiert
+  /betaling/webhook:
+    post:
+      summary: Motta betalingsstatus fra Vipps/Stripe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Status mottatt
+  /bruker/me:
+    get:
+      summary: Hent innlogget brukers info
+      responses:
+        '200':
+          description: Brukerinfo
+  /bruker/slett:
+    post:
+      summary: Slett brukerdata (GDPR)
+      responses:
+        '200':
+          description: Brukerdata slettet
+components:
+  schemas:
+    Fiskekort:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        redskap:
+          type: string
+        gyldig_fra:
+          type: string
+          format: date
+        gyldig_til:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [aktiv, fremtidig, utgått]
+        qr_kode:
+          type: string
+    FiskekortRequest:
+      type: object
+      properties:
+        type:
+          type: string
+        redskap:
+          type: string
+        gyldig_fra:
+          type: string
+          format: date
+        gyldig_til:
+          type: string
+          format: date

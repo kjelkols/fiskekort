@@ -1,1 +1,20 @@
-Dette er en app for fiskekort
+# Fiskekort
+
+
+En nettapplikasjon som administrer kjøp av fiskekort.
+
+## Målsetning
+Denne første versjonen er beregnet på en enkelt eier av fiskerettigheter som vil forenkle salget av fiskekort. Det skal også være enkelt for eieren å legge ut statiske nettsider med informasjon, kart, regler og generell informasjon som gir folk lyst til å fiske akkurat her. Det bør lages slik at nettsiden kommer opp i søk på nettet. Nettsiden skal være et lettvekts alternativ til eksisterende løsninger som ofte koster mye for eieren, f.eks. inatur.no. Det beste vil være at eieren kan installere systemet selv og enkelt vedlikeholde det.
+
+Det er viktig å holde systemet enkelt slik at det kan prøves ut av en rettighetshaver, f.eks et elveeierlag som tidligere har hatt løsninger gjennom vipps og en sportsbutikk som utsteder fysiske kort.
+
+Hvis prøveperioden gir gode resultater kan systemet utvides, men måten det gjøres på skal ikke være i fokus nå.
+
+## Funksjonalitet
+Nettsiden skal selge elektroniske fiskekort med en qr-kode som kan kontrolleres av oppsynsmann. Det må derfor utvikles en kontroll-app som er enkel å installere og bruke. qr-koden skal gjelde for en enkeltfiskeredskap, f.eks stang, garn eller oter. Redskapstyper og reglerlegges inn av administratoren for nettsiden. Dersom en vil ha f.eks flere stenker samtidig må det kjøpes separate qr-koder. qr-kodene inneholder også informasjon om gyldighetstid (start, slutt). Det enkleste er å tilby dagskort, ukeskort og sesongkort. Administrator bestemmer dette. Det bør gis mulighet til å spesifisere kvantumsrabatt ved kjøp av flere qr-koder. Systemet bør være fleksibelt, men ikke komplisert.
+
+Selve fiskekortet skal være en side med tydelig informasjon om redskapskategori og gyldig tid. Den bør kunne caches eller lastes ned på telefonen. Det bør også være en løsning for å skrive ut fysiske fiskekort. En butikk kan kanskje bruke en spesialskriver som lager fine fiskekort som tåler vann.
+
+Det må legges inn betalingsløsninger som kan brukes av utenlandske brukere i tillegg til f.eks Vipps.
+
+Kontrollappen må ha mulighet for offline kontroll, da dekningen ikke alltid er god på fiskeplassene.
